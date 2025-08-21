@@ -6,7 +6,7 @@
 trigger:
 - main
 
-pool: batch-28
+pool: Tech-data
 
 steps:
 
@@ -42,9 +42,9 @@ steps:
 
 - task: S3Upload@1
   inputs:
-    awsCredentials: 'batch-28-AzureDevOps-AWS'
-    regionName: 'ap-south-1'
-    bucketName: 'aws-s3-bucket-ygminds-batch-28'
+    awsCredentials: 'tdi-AzureDevOps-AWS'
+    regionName: 'us-east-1'
+    bucketName: 'tech-data-app-1-tdi-batch'
     sourceFolder: '$(Build.ArtifactStagingDirectory)'
     globExpressions: '**'
     filesAcl: 'bucket-owner-full-control'
@@ -52,8 +52,8 @@ steps:
 
 - task: AzureCLI@2
   inputs:
-    azureSubscription: 'batch-27-AzureDevOps-Azure'
+    azureSubscription: 'TDI-Azure-DevOps-Azure'
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload-batch --account-name batch25storageaccount123 --destination artifactcontainer --source $(Build.ArtifactStagingDirectory) --pattern **.war'
+    inlineScript: 'az storage blob upload-batch --account-name tdistorageaccount123 --destination artifactcontainer --source $(Build.ArtifactStagingDirectory) --pattern **.war'
 
