@@ -1,0 +1,59 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool: batch-28
+
+steps:
+
+- script: echo "The build ID is $(Build.BuildId) & build number is $(Build.BuildNumber)." 
+  displayName: 'Printing the build ID and build number'
+
+- script: sudo apt update  && sudo apt-get install openjdk-8-jdk -y && java -version
+  displayName: 'Installing and chking java version'
+
+- script: ls -al && chmod 700 build.sh && sudo bash ./build.sh && ls -al
+  displayName: Run the build script
+
+- script: ls -la && mv ROOT.war ROOT$(Build.BuildId).war && ls -la
+  displayName: Renaming file ROOT.war
+
+
+
+- task: CopyFiles@2
+  inputs:
+    Contents: 'ROOT$(Build.BuildId).war'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    OverWrite: true
+
+- script: ls -al $(Build.ArtifactStagingDirectory)
+  displayName: listing artifcat
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'ROOT$(Build.BuildId).war'
+    publishLocation: 'Container'
+
+
+- task: S3Upload@1
+  inputs:
+    awsCredentials: 'batch-28-AzureDevOps-AWS'
+    regionName: 'ap-south-1'
+    bucketName: 'aws-s3-bucket-ygminds-batch-28'
+    sourceFolder: '$(Build.ArtifactStagingDirectory)'
+    globExpressions: '**'
+    filesAcl: 'bucket-owner-full-control'
+
+
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'batch-27-AzureDevOps-Azure'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob upload-batch --account-name batch25storageaccount123 --destination artifactcontainer --source $(Build.ArtifactStagingDirectory) --pattern **.war'
+
